@@ -1,0 +1,2 @@
+# pymines
+Infinite minesweeper game
