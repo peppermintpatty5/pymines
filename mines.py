@@ -136,7 +136,7 @@ class Minesweeper:
 
     def get_tile(self, x: int, y: int) -> Tile:
         """
-        Get the tile associated with the cell at the given coordinate
+        Get the tile associated with the cell at the given coordinate.
         """
         if (x, y) in self.mines:
             if (x, y) in self.uncovered:

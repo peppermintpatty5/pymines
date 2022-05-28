@@ -101,7 +101,7 @@ class TextUI:
                     return False
 
     @staticmethod
-    def start(game: Minesweeper) -> None:
+    def start(game: Minesweeper, x_ray=False) -> None:
         """
         Starts an ncurses user interface for the minesweeper game.
         """
@@ -113,6 +113,10 @@ class TextUI:
         stdscr.keypad(True)
         stdscr.clear()
 
+        tile_hide = {
+            Minesweeper.Tile.MINE: Minesweeper.Tile.PLAIN,
+            Minesweeper.Tile.FLAG_WRONG: Minesweeper.Tile.FLAG_RIGHT,
+        }
         tile_fg_map = {
             Minesweeper.Tile.ZERO: curses.COLOR_WHITE,
             Minesweeper.Tile.ONE: curses.COLOR_BLUE,
@@ -143,6 +147,8 @@ class TextUI:
             for y in range(max_y):
                 for x in range(max_x // 2):
                     tile = game.get_tile(ax + x, ay + y)
+                    if not x_ray:
+                        tile = tile_hide.get(tile, tile)
                     try:
                         stdscr.addch(
                             y, x * 2 + 1, TextUI.tile_char(tile), TextUI.tile_attr(tile)
@@ -172,13 +178,25 @@ class TextUI:
                 case "D":
                     ax += 5
                 case curses.KEY_UP:
-                    cy -= 1
+                    if cy - 1 < 0:
+                        ay -= 1
+                    else:
+                        cy -= 1
                 case curses.KEY_DOWN:
-                    cy += 1
+                    if cy + 1 >= max_y:
+                        ay += 1
+                    else:
+                        cy += 1
                 case curses.KEY_LEFT:
-                    cx -= 1
+                    if cx - 1 < 0:
+                        ax -= 1
+                    else:
+                        cx -= 1
                 case curses.KEY_RIGHT:
-                    cx += 1
+                    if cx + 1 >= max_x // 2:
+                        ax += 1
+                    else:
+                        cx += 1
                 case "0":
                     max_y, max_x = stdscr.getmaxyx()
                     ax, ay = -max_x // 4, -max_y // 2
@@ -200,7 +218,3 @@ class TextUI:
         stdscr.keypad(False)
         curses.echo()
         curses.endwin()
-
-
-if __name__ == "__main__":
-    TextUI.start(Minesweeper(0.1))
