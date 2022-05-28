@@ -184,10 +184,10 @@ class TextUI:
                     ax, ay = -max_x // 4, -max_y // 2
                     cx, cy = max_x // 4, max_y // 2
                 case curses.KEY_ENTER | "\r" | "\n":
-                    game.uncover(ax + cx, ay + cy)
+                    game.auto_uncover(ax + cx, ay + cy)
                 case " ":
                     if not game.flag(ax + cx, ay + cy):
-                        game.chord(ax + cx, ay + cy)
+                        game.chord(ax + cx, ay + cy, auto=True)
                 case "r" | "R":
                     stdscr.clear()
                     stdscr.refresh()
@@ -203,4 +203,4 @@ class TextUI:
 
 
 if __name__ == "__main__":
-    TextUI.start(Minesweeper(0.17))
+    TextUI.start(Minesweeper(0.1))

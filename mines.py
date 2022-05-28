@@ -2,6 +2,7 @@
 Minesweeper
 """
 
+from collections import deque
 from enum import Enum
 from itertools import product
 from random import random
@@ -11,6 +12,8 @@ class Minesweeper:
     """
     An infinite game of minesweeper.
     """
+
+    AUTO_LIMIT = 1 << 16
 
     class Tile(Enum):
         """
@@ -34,6 +37,10 @@ class Minesweeper:
         FLAG_WRONG = 13
 
     def __init__(self, density: float) -> None:
+        """
+        The density parameter determines what proportion of cells are mines and shall be
+        in the range [0, 1].
+        """
         self.density = density
         self.mines: set[tuple[int, int]] = set()
         self.uncovered: set[tuple[int, int]] = set()
@@ -65,6 +72,35 @@ class Minesweeper:
             return True
         return False
 
+    def auto_uncover(self, x: int, y: int) -> bool:
+        """
+        Uncover the cell at the given coordinate and iteratively uncover cells adjacent
+        to 0-tiles. This computation can go on indefinitely for low densities, so the
+        number of cells uncovered is capped at `AUTO_LIMIT`.
+
+        Return true if the move is legal, false otherwise.
+        """
+        num_uncovered = 0
+        queue = deque([(x, y)])  # queue ordered by proximity
+        cache = {(x, y)}  # avoid queueing the same thing twice
+
+        while queue and num_uncovered < Minesweeper.AUTO_LIMIT:
+            (x, y) = queue.popleft()
+            adj = self.adjacent(x, y)
+
+            if self.uncover(x, y) and (x, y) not in self.mines and not adj & self.mines:
+                num_uncovered += 1
+                for adj in adj:
+                    if (
+                        adj not in cache
+                        and adj not in self.uncovered
+                        and adj not in self.flags
+                    ):
+                        queue.append(adj)
+                        cache.add(adj)
+
+        return num_uncovered > 0
+
     def flag(self, x: int, y: int) -> bool:
         """
         Set/unset the cell at the given coordinate. Return true if the move is legal,
@@ -79,7 +115,7 @@ class Minesweeper:
             return True
         return False
 
-    def chord(self, x: int, y: int) -> bool:
+    def chord(self, x: int, y: int, auto=False) -> bool:
         """
         Perform a "chord" move at the given coordinate. Return true if the move is legal,
         false otherwise.
@@ -90,7 +126,10 @@ class Minesweeper:
             adj & self.uncovered & self.mines
         ) == len(adj & self.mines):
             for (u, v) in adj:
-                self.uncover(u, v)
+                if auto:
+                    self.auto_uncover(u, v)
+                else:
+                    self.uncover(u, v)
 
             return True
         return False
