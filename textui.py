@@ -86,11 +86,17 @@ class TextUI:
         Prompts the user for yes/no confirmation with the given message. Returns true if
         the user chose "yes", false if the user chose "no".
         """
-        max_y, _ = window.getmaxyx()
+        max_y, max_x = window.getmaxyx()
 
-        window.move(max_y - 1, 0)
-        window.clrtoeol()
-        window.insstr(f"{message} [y/n]", curses.color_pair(0))
+        curses.init_pair(
+            50, curses.COLOR_BLACK, curses.COLOR_YELLOW
+        )  # TODO better pair number
+        window.insstr(
+            max_y - 1,
+            0,
+            f"{message} [y/n]".ljust(max_x),
+            curses.color_pair(50),
+        )
         curses.curs_set(0)
 
         while True:
@@ -99,6 +105,21 @@ class TextUI:
                     return True
                 case "n" | "N":
                     return False
+
+    @staticmethod
+    def print_status_bar(window: curses.window, x: int, y: int) -> None:
+        """
+        Print status bar showing cursor location and possibly other information.
+        """
+        max_y, max_x = window.getmaxyx()
+
+        curses.init_pair(51, curses.COLOR_BLACK, curses.COLOR_WHITE)
+        window.insstr(
+            max_y - 1,
+            0,
+            f"{(x, y)}".ljust(max_x),
+            curses.color_pair(51),
+        )
 
     @staticmethod
     def start(game: Minesweeper, x_ray=False) -> None:
@@ -136,71 +157,76 @@ class TextUI:
         for tile, fg in tile_fg_map.items():
             curses.init_pair(tile.value + 1, fg, -1)
 
-        ax, ay = 0, 0  # anchor point, top left corner
+        ax, ay = 0, 0  # anchor point, bottom left corner
         cx, cy = 0, 0  # cursor point, relative to anchor
 
         while True:
             max_y, max_x = stdscr.getmaxyx()
+            max_cx, max_cy = max_x // 2, max_y - 1
+
+            TextUI.print_status_bar(stdscr, ax + cx, ay + cy)
 
             # print the grid
             curses.curs_set(0)
-            for y in range(max_y):
-                for x in range(max_x // 2):
+            for y in range(max_cy):
+                for x in range(max_cx):
                     tile = game.get_tile(ax + x, ay + y)
                     if not x_ray:
                         tile = tile_hide.get(tile, tile)
                     try:
                         stdscr.addch(
-                            y, x * 2 + 1, TextUI.tile_char(tile), TextUI.tile_attr(tile)
+                            max_y - 2 - y,
+                            x * 2 + 1,
+                            TextUI.tile_char(tile),
+                            TextUI.tile_attr(tile),
                         )
                     except curses.error:
                         pass
 
-            stdscr.move(cy, cx * 2 + 1)
+            stdscr.move(max_y - 2 - cy, cx * 2 + 1)
             stdscr.refresh()
             curses.curs_set(1)
 
             match stdscr.get_wch():
                 case "w":
-                    ay -= 1
-                case "s":
                     ay += 1
+                case "s":
+                    ay -= 1
                 case "a":
                     ax -= 1
                 case "d":
                     ax += 1
                 case "W":
-                    ay -= 5
-                case "S":
                     ay += 5
+                case "S":
+                    ay -= 5
                 case "A":
                     ax -= 5
                 case "D":
                     ax += 5
                 case curses.KEY_UP:
+                    if cy + 1 >= max_cy:
+                        ay += 1
+                    else:
+                        cy += 1
+                case curses.KEY_DOWN:
                     if cy - 1 < 0:
                         ay -= 1
                     else:
                         cy -= 1
-                case curses.KEY_DOWN:
-                    if cy + 1 >= max_y:
-                        ay += 1
-                    else:
-                        cy += 1
                 case curses.KEY_LEFT:
                     if cx - 1 < 0:
                         ax -= 1
                     else:
                         cx -= 1
                 case curses.KEY_RIGHT:
-                    if cx + 1 >= max_x // 2:
+                    if cx + 1 >= max_cx:
                         ax += 1
                     else:
                         cx += 1
                 case "0":
-                    max_y, max_x = stdscr.getmaxyx()
-                    ax, ay = -max_x // 4, -max_y // 2
-                    cx, cy = max_x // 4, max_y // 2
+                    ax, ay = -max_cx // 2, -max_cy // 2
+                    cx, cy = max_cx // 2, max_cy // 2
                 case curses.KEY_ENTER | "\r" | "\n":
                     game.auto_uncover(ax + cx, ay + cy)
                 case " ":
@@ -212,7 +238,7 @@ class TextUI:
                 case "q" | "Q":
                     if TextUI.confirm_yn(stdscr, "Quit?"):
                         break
-                    stdscr.clear()
+                    stdscr.erase()
 
         curses.nocbreak()
         stdscr.keypad(False)

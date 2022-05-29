@@ -103,8 +103,8 @@ class Minesweeper:
 
     def flag(self, x: int, y: int) -> bool:
         """
-        Set/unset the cell at the given coordinate. Return true if the move is legal,
-        false otherwise.
+        Set/unset a flag at the given coordinate. A flag precludes a cell from being
+        uncovered. Return true if the move is legal, false otherwise.
         """
         if (x, y) not in self.uncovered:
             if (x, y) not in self.flags:
