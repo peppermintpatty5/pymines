@@ -225,7 +225,7 @@ class TextUI:
                     else:
                         cx += 1
                 case "0":
-                    ax, ay = -max_cx // 2, -max_cy // 2
+                    ax, ay = -(max_cx // 2), -(max_cy // 2)
                     cx, cy = max_cx // 2, max_cy // 2
                 case curses.KEY_ENTER | "\r" | "\n":
                     game.auto_uncover(ax + cx, ay + cy)

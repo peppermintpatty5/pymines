@@ -90,14 +90,14 @@ class Minesweeper:
 
             if self.uncover(x, y) and (x, y) not in self.mines and not adj & self.mines:
                 num_uncovered += 1
-                for adj in adj:
+                for (u, v) in adj:
                     if (
-                        adj not in cache
-                        and adj not in self.uncovered
-                        and adj not in self.flags
+                        (u, v) not in cache
+                        and (u, v) not in self.uncovered
+                        and (u, v) not in self.flags
                     ):
-                        queue.append(adj)
-                        cache.add(adj)
+                        queue.append((u, v))
+                        cache.add((u, v))
 
         return num_uncovered > 0
 
