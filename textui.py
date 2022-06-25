@@ -4,7 +4,7 @@ Text user interface
 
 import curses
 
-from mines import Minesweeper
+from mines import Minesweeper, Tile
 
 
 class TextUI:
@@ -13,38 +13,38 @@ class TextUI:
     """
 
     @staticmethod
-    def tile_char(tile: Minesweeper.Tile) -> str:
+    def tile_char(tile: Tile) -> str:
         """
         Maps each tile to a character representation.
         """
         match tile:
-            case Minesweeper.Tile.ZERO:
+            case Tile.ZERO:
                 char = " "
-            case Minesweeper.Tile.ONE:
+            case Tile.ONE:
                 char = "1"
-            case Minesweeper.Tile.TWO:
+            case Tile.TWO:
                 char = "2"
-            case Minesweeper.Tile.THREE:
+            case Tile.THREE:
                 char = "3"
-            case Minesweeper.Tile.FOUR:
+            case Tile.FOUR:
                 char = "4"
-            case Minesweeper.Tile.FIVE:
+            case Tile.FIVE:
                 char = "5"
-            case Minesweeper.Tile.SIX:
+            case Tile.SIX:
                 char = "6"
-            case Minesweeper.Tile.SEVEN:
+            case Tile.SEVEN:
                 char = "7"
-            case Minesweeper.Tile.EIGHT:
+            case Tile.EIGHT:
                 char = "8"
-            case Minesweeper.Tile.PLAIN:
+            case Tile.PLAIN:
                 char = "-"
-            case Minesweeper.Tile.MINE:
+            case Tile.MINE:
                 char = "*"
-            case Minesweeper.Tile.DETONATED:
+            case Tile.DETONATED:
                 char = "@"
-            case Minesweeper.Tile.FLAG_RIGHT:
+            case Tile.FLAG_RIGHT:
                 char = "#"
-            case Minesweeper.Tile.FLAG_WRONG:
+            case Tile.FLAG_WRONG:
                 char = "X"
             case _:
                 raise ValueError("unknown tile")
@@ -52,30 +52,24 @@ class TextUI:
         return char
 
     @staticmethod
-    def tile_attr(tile: Minesweeper.Tile) -> int:
+    def tile_attr(tile: Tile) -> int:
         """
         Maps each tile to an attribute which can be used directly in `attrset`.
         """
         match tile:
             case (
-                Minesweeper.Tile.ONE
-                | Minesweeper.Tile.THREE
-                | Minesweeper.Tile.SEVEN
-                | Minesweeper.Tile.EIGHT
-                | Minesweeper.Tile.PLAIN
-                | Minesweeper.Tile.MINE
-                | Minesweeper.Tile.DETONATED
-                | Minesweeper.Tile.FLAG_RIGHT
-                | Minesweeper.Tile.FLAG_WRONG
+                Tile.ONE
+                | Tile.THREE
+                | Tile.SEVEN
+                | Tile.EIGHT
+                | Tile.PLAIN
+                | Tile.MINE
+                | Tile.DETONATED
+                | Tile.FLAG_RIGHT
+                | Tile.FLAG_WRONG
             ):
                 return curses.color_pair(tile.value + 1) | curses.A_BOLD
-            case (
-                Minesweeper.Tile.ZERO
-                | Minesweeper.Tile.TWO
-                | Minesweeper.Tile.FOUR
-                | Minesweeper.Tile.FIVE
-                | Minesweeper.Tile.SIX
-            ):
+            case (Tile.ZERO | Tile.TWO | Tile.FOUR | Tile.FIVE | Tile.SIX):
                 return curses.color_pair(tile.value + 1) | curses.A_NORMAL
             case _:
                 return curses.color_pair(0)
@@ -135,24 +129,24 @@ class TextUI:
         stdscr.clear()
 
         tile_hide = {
-            Minesweeper.Tile.MINE: Minesweeper.Tile.PLAIN,
-            Minesweeper.Tile.FLAG_WRONG: Minesweeper.Tile.FLAG_RIGHT,
+            Tile.MINE: Tile.PLAIN,
+            Tile.FLAG_WRONG: Tile.FLAG_RIGHT,
         }
         tile_fg_map = {
-            Minesweeper.Tile.ZERO: curses.COLOR_WHITE,
-            Minesweeper.Tile.ONE: curses.COLOR_BLUE,
-            Minesweeper.Tile.TWO: curses.COLOR_GREEN,
-            Minesweeper.Tile.THREE: curses.COLOR_RED,
-            Minesweeper.Tile.FOUR: curses.COLOR_BLUE,
-            Minesweeper.Tile.FIVE: curses.COLOR_RED,
-            Minesweeper.Tile.SIX: curses.COLOR_CYAN,
-            Minesweeper.Tile.SEVEN: curses.COLOR_WHITE,
-            Minesweeper.Tile.EIGHT: curses.COLOR_BLACK,
-            Minesweeper.Tile.PLAIN: curses.COLOR_BLACK,
-            Minesweeper.Tile.MINE: curses.COLOR_MAGENTA,
-            Minesweeper.Tile.DETONATED: curses.COLOR_MAGENTA,
-            Minesweeper.Tile.FLAG_RIGHT: curses.COLOR_GREEN,
-            Minesweeper.Tile.FLAG_WRONG: curses.COLOR_MAGENTA,
+            Tile.ZERO: curses.COLOR_WHITE,
+            Tile.ONE: curses.COLOR_BLUE,
+            Tile.TWO: curses.COLOR_GREEN,
+            Tile.THREE: curses.COLOR_RED,
+            Tile.FOUR: curses.COLOR_BLUE,
+            Tile.FIVE: curses.COLOR_RED,
+            Tile.SIX: curses.COLOR_CYAN,
+            Tile.SEVEN: curses.COLOR_WHITE,
+            Tile.EIGHT: curses.COLOR_BLACK,
+            Tile.PLAIN: curses.COLOR_BLACK,
+            Tile.MINE: curses.COLOR_MAGENTA,
+            Tile.DETONATED: curses.COLOR_MAGENTA,
+            Tile.FLAG_RIGHT: curses.COLOR_GREEN,
+            Tile.FLAG_WRONG: curses.COLOR_MAGENTA,
         }
         for tile, fg in tile_fg_map.items():
             curses.init_pair(tile.value + 1, fg, -1)

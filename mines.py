@@ -8,33 +8,34 @@ from itertools import product
 from random import random
 
 
+class Tile(Enum):
+    """
+    A tile uniquely describes a cell. Numeric tiles have corresponding numeric
+    values.
+    """
+
+    ZERO = 0
+    ONE = 1
+    TWO = 2
+    THREE = 3
+    FOUR = 4
+    FIVE = 5
+    SIX = 6
+    SEVEN = 7
+    EIGHT = 8
+    PLAIN = 9
+    MINE = 10
+    DETONATED = 11
+    FLAG_RIGHT = 12
+    FLAG_WRONG = 13
+
+
 class Minesweeper:
     """
     An infinite game of minesweeper.
     """
 
     AUTO_LIMIT = 1 << 16
-
-    class Tile(Enum):
-        """
-        A tile uniquely describes a cell. Numeric tiles have corresponding numeric
-        values.
-        """
-
-        ZERO = 0
-        ONE = 1
-        TWO = 2
-        THREE = 3
-        FOUR = 4
-        FIVE = 5
-        SIX = 6
-        SEVEN = 7
-        EIGHT = 8
-        PLAIN = 9
-        MINE = 10
-        DETONATED = 11
-        FLAG_RIGHT = 12
-        FLAG_WRONG = 13
 
     def __init__(self, density: float) -> None:
         """
@@ -140,17 +141,17 @@ class Minesweeper:
         """
         if (x, y) in self.mines:
             if (x, y) in self.uncovered:
-                tile = Minesweeper.Tile.DETONATED
+                tile = Tile.DETONATED
             elif (x, y) in self.flags:
-                tile = Minesweeper.Tile.FLAG_RIGHT
+                tile = Tile.FLAG_RIGHT
             else:
-                tile = Minesweeper.Tile.MINE
+                tile = Tile.MINE
         else:
             if (x, y) in self.uncovered:
-                tile = Minesweeper.Tile(len(self.adjacent(x, y) & self.mines))
+                tile = Tile(len(self.adjacent(x, y) & self.mines))
             elif (x, y) in self.flags:
-                tile = Minesweeper.Tile.FLAG_WRONG
+                tile = Tile.FLAG_WRONG
             else:
-                tile = Minesweeper.Tile.PLAIN
+                tile = Tile.PLAIN
 
         return tile
