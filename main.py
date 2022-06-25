@@ -5,6 +5,7 @@ Command-line interface for minesweeper game.
 """
 
 import argparse
+import curses
 import signal
 
 from mines import Minesweeper
@@ -34,4 +35,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    TextUI.start(Minesweeper(args.density), x_ray=args.x_ray)
+    game = Minesweeper(args.density)
+    curses.wrapper(TextUI.main, game, x_ray=args.x_ray)

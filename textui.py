@@ -12,44 +12,38 @@ class TextUI:
     Text user interface.
     """
 
-    @staticmethod
-    def tile_char(tile: Tile) -> str:
-        """
-        Maps each tile to a character representation.
-        """
-        match tile:
-            case Tile.ZERO:
-                char = " "
-            case Tile.ONE:
-                char = "1"
-            case Tile.TWO:
-                char = "2"
-            case Tile.THREE:
-                char = "3"
-            case Tile.FOUR:
-                char = "4"
-            case Tile.FIVE:
-                char = "5"
-            case Tile.SIX:
-                char = "6"
-            case Tile.SEVEN:
-                char = "7"
-            case Tile.EIGHT:
-                char = "8"
-            case Tile.PLAIN:
-                char = "-"
-            case Tile.MINE:
-                char = "*"
-            case Tile.DETONATED:
-                char = "@"
-            case Tile.FLAG_RIGHT:
-                char = "#"
-            case Tile.FLAG_WRONG:
-                char = "X"
-            case _:
-                raise ValueError("unknown tile")
-
-        return char
+    TILE_CHAR = {
+        Tile.ZERO: " ",
+        Tile.ONE: "1",
+        Tile.TWO: "2",
+        Tile.THREE: "3",
+        Tile.FOUR: "4",
+        Tile.FIVE: "5",
+        Tile.SIX: "6",
+        Tile.SEVEN: "7",
+        Tile.EIGHT: "8",
+        Tile.PLAIN: "-",
+        Tile.MINE: "*",
+        Tile.DETONATED: "@",
+        Tile.FLAG_RIGHT: "#",
+        Tile.FLAG_WRONG: "X",
+    }
+    TILE_FG = {
+        Tile.ZERO: curses.COLOR_WHITE,
+        Tile.ONE: curses.COLOR_BLUE,
+        Tile.TWO: curses.COLOR_GREEN,
+        Tile.THREE: curses.COLOR_RED,
+        Tile.FOUR: curses.COLOR_BLUE,
+        Tile.FIVE: curses.COLOR_RED,
+        Tile.SIX: curses.COLOR_CYAN,
+        Tile.SEVEN: curses.COLOR_WHITE,
+        Tile.EIGHT: curses.COLOR_BLACK,
+        Tile.PLAIN: curses.COLOR_BLACK,
+        Tile.MINE: curses.COLOR_MAGENTA,
+        Tile.DETONATED: curses.COLOR_MAGENTA,
+        Tile.FLAG_RIGHT: curses.COLOR_GREEN,
+        Tile.FLAG_WRONG: curses.COLOR_MAGENTA,
+    }
 
     @staticmethod
     def tile_attr(tile: Tile) -> int:
@@ -116,39 +110,19 @@ class TextUI:
         )
 
     @staticmethod
-    def start(game: Minesweeper, x_ray=False) -> None:
+    def main(stdscr: curses.window, game: Minesweeper, x_ray=False) -> None:
         """
-        Starts an ncurses user interface for the minesweeper game.
+        Entry point for graphical minesweeper game. Call this function using
+        `curses.wrapper`.
         """
-        stdscr = curses.initscr()
-        curses.noecho()
-        curses.cbreak()
-        curses.start_color()
         curses.use_default_colors()
-        stdscr.keypad(True)
         stdscr.clear()
 
         tile_hide = {
             Tile.MINE: Tile.PLAIN,
             Tile.FLAG_WRONG: Tile.FLAG_RIGHT,
         }
-        tile_fg_map = {
-            Tile.ZERO: curses.COLOR_WHITE,
-            Tile.ONE: curses.COLOR_BLUE,
-            Tile.TWO: curses.COLOR_GREEN,
-            Tile.THREE: curses.COLOR_RED,
-            Tile.FOUR: curses.COLOR_BLUE,
-            Tile.FIVE: curses.COLOR_RED,
-            Tile.SIX: curses.COLOR_CYAN,
-            Tile.SEVEN: curses.COLOR_WHITE,
-            Tile.EIGHT: curses.COLOR_BLACK,
-            Tile.PLAIN: curses.COLOR_BLACK,
-            Tile.MINE: curses.COLOR_MAGENTA,
-            Tile.DETONATED: curses.COLOR_MAGENTA,
-            Tile.FLAG_RIGHT: curses.COLOR_GREEN,
-            Tile.FLAG_WRONG: curses.COLOR_MAGENTA,
-        }
-        for tile, fg in tile_fg_map.items():
+        for tile, fg in TextUI.TILE_FG.items():
             curses.init_pair(tile.value + 1, fg, -1)
 
         ax, ay = 0, 0  # anchor point, bottom left corner
@@ -171,7 +145,7 @@ class TextUI:
                         stdscr.addch(
                             max_y - 2 - y,
                             x * 2 + 1,
-                            TextUI.tile_char(tile),
+                            TextUI.TILE_CHAR[tile],
                             TextUI.tile_attr(tile),
                         )
                     except curses.error:
@@ -231,10 +205,5 @@ class TextUI:
                     stdscr.refresh()
                 case "q" | "Q":
                     if TextUI.confirm_yn(stdscr, "Quit?"):
-                        break
+                        return
                     stdscr.erase()
-
-        curses.nocbreak()
-        stdscr.keypad(False)
-        curses.echo()
-        curses.endwin()
