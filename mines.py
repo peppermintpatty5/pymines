@@ -116,16 +116,19 @@ class Minesweeper:
             return True
         return False
 
-    def chord(self, x: int, y: int, auto=False) -> bool:
+    def chord(self, x: int, y: int, auto: bool = False) -> bool:
         """
         Perform a "chord" move at the given coordinate. Return true if the move is legal,
         false otherwise.
         """
         adj = self.adjacent(x, y)
 
-        if (x, y) in self.uncovered and len(adj & self.flags) + len(
-            adj & self.uncovered & self.mines
-        ) == len(adj & self.mines):
+        if (
+            (x, y) in self.uncovered
+            and (x, y) not in self.mines
+            and len(adj & self.flags) + len(adj & self.uncovered & self.mines)
+            == len(adj & self.mines)
+        ):
             for (u, v) in adj:
                 if auto:
                     self.auto_uncover(u, v)
