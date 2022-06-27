@@ -28,45 +28,46 @@ class TextUI:
         Tile.FLAG_RIGHT: "#",
         Tile.FLAG_WRONG: "X",
     }
-    TILE_FG = {
-        Tile.ZERO: curses.COLOR_WHITE,
-        Tile.ONE: curses.COLOR_BLUE,
-        Tile.TWO: curses.COLOR_GREEN,
-        Tile.THREE: curses.COLOR_RED,
-        Tile.FOUR: curses.COLOR_BLUE,
-        Tile.FIVE: curses.COLOR_RED,
-        Tile.SIX: curses.COLOR_CYAN,
-        Tile.SEVEN: curses.COLOR_WHITE,
-        Tile.EIGHT: curses.COLOR_BLACK,
-        Tile.PLAIN: curses.COLOR_BLACK,
-        Tile.MINE: curses.COLOR_MAGENTA,
-        Tile.DETONATED: curses.COLOR_MAGENTA,
-        Tile.FLAG_RIGHT: curses.COLOR_GREEN,
-        Tile.FLAG_WRONG: curses.COLOR_MAGENTA,
+    TILE_COLORS = {
+        Tile.ZERO: (curses.COLOR_WHITE, False),
+        Tile.ONE: (curses.COLOR_BLUE, True),
+        Tile.TWO: (curses.COLOR_GREEN, False),
+        Tile.THREE: (curses.COLOR_RED, True),
+        Tile.FOUR: (curses.COLOR_BLUE, False),
+        Tile.FIVE: (curses.COLOR_RED, False),
+        Tile.SIX: (curses.COLOR_CYAN, False),
+        Tile.SEVEN: (curses.COLOR_WHITE, True),
+        Tile.EIGHT: (curses.COLOR_BLACK, True),
+        Tile.PLAIN: (curses.COLOR_BLACK, True),
+        Tile.MINE: (curses.COLOR_MAGENTA, False),
+        Tile.DETONATED: (curses.COLOR_YELLOW, True),
+        Tile.FLAG_RIGHT: (curses.COLOR_GREEN, True),
+        Tile.FLAG_WRONG: (curses.COLOR_MAGENTA, True),
     }
+
+    @staticmethod
+    def init_colors() -> None:
+        """
+        Initialize colors for user interface.
+        """
+        curses.use_default_colors()
+
+        for tile, (fg, _) in TextUI.TILE_COLORS.items():
+            curses.init_pair(tile.value + 1, fg, -1)
+
+        curses.init_pair(50, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+        curses.init_pair(51, curses.COLOR_BLACK, curses.COLOR_WHITE)
 
     @staticmethod
     def tile_attr(tile: Tile) -> int:
         """
         Maps each tile to an attribute which can be used directly in `attrset`.
         """
-        match tile:
-            case (
-                Tile.ONE
-                | Tile.THREE
-                | Tile.SEVEN
-                | Tile.EIGHT
-                | Tile.PLAIN
-                | Tile.MINE
-                | Tile.DETONATED
-                | Tile.FLAG_RIGHT
-                | Tile.FLAG_WRONG
-            ):
-                return curses.color_pair(tile.value + 1) | curses.A_BOLD
-            case (Tile.ZERO | Tile.TWO | Tile.FOUR | Tile.FIVE | Tile.SIX):
-                return curses.color_pair(tile.value + 1) | curses.A_NORMAL
-            case _:
-                return curses.color_pair(0)
+        _, bold = TextUI.TILE_COLORS[tile]
+
+        return curses.color_pair(tile.value + 1) | (
+            curses.A_BOLD if bold else curses.A_NORMAL
+        )
 
     @staticmethod
     def confirm_yn(window: curses.window, message: str) -> bool:
@@ -76,9 +77,6 @@ class TextUI:
         """
         max_y, max_x = window.getmaxyx()
 
-        curses.init_pair(
-            50, curses.COLOR_BLACK, curses.COLOR_YELLOW
-        )  # TODO better pair number
         window.insstr(
             max_y - 1,
             0,
@@ -93,6 +91,35 @@ class TextUI:
                     return True
                 case "n" | "N":
                     return False
+                case _:
+                    pass
+
+    @staticmethod
+    def print_grid(
+        stdscr: curses.window, game: Minesweeper, ax: int, ay: int, x_ray: bool
+    ) -> None:
+        """
+        Print grid to screen.
+        """
+        tile_hide = {
+            Tile.MINE: Tile.PLAIN,
+            Tile.FLAG_WRONG: Tile.FLAG_RIGHT,
+        }
+
+        max_y, max_x = stdscr.getmaxyx()
+        max_cx, max_cy = max_x // 2, max_y - 1
+
+        for y in range(max_cy):
+            for x in range(max_cx):
+                tile = game.get_tile(ax + x, ay + y)
+                if not x_ray:
+                    tile = tile_hide.get(tile, tile)
+                stdscr.addstr(
+                    max_y - 2 - y,
+                    x * 2,
+                    " " + TextUI.TILE_CHAR[tile],
+                    TextUI.tile_attr(tile),
+                )
 
     @staticmethod
     def print_status_bar(window: curses.window, x: int, y: int) -> None:
@@ -101,7 +128,6 @@ class TextUI:
         """
         max_y, max_x = window.getmaxyx()
 
-        curses.init_pair(51, curses.COLOR_BLACK, curses.COLOR_WHITE)
         window.insstr(
             max_y - 1,
             0,
@@ -110,20 +136,13 @@ class TextUI:
         )
 
     @staticmethod
-    def main(stdscr: curses.window, game: Minesweeper, x_ray=False) -> None:
+    def main(stdscr: curses.window, game: Minesweeper, x_ray: bool = False) -> None:
         """
         Entry point for graphical minesweeper game. Call this function using
         `curses.wrapper`.
         """
-        curses.use_default_colors()
+        TextUI.init_colors()
         stdscr.clear()
-
-        tile_hide = {
-            Tile.MINE: Tile.PLAIN,
-            Tile.FLAG_WRONG: Tile.FLAG_RIGHT,
-        }
-        for tile, fg in TextUI.TILE_FG.items():
-            curses.init_pair(tile.value + 1, fg, -1)
 
         ax, ay = 0, 0  # anchor point, bottom left corner
         cx, cy = 0, 0  # cursor point, relative to anchor
@@ -133,23 +152,7 @@ class TextUI:
             max_cx, max_cy = max_x // 2, max_y - 1
 
             TextUI.print_status_bar(stdscr, ax + cx, ay + cy)
-
-            # print the grid
-            curses.curs_set(0)
-            for y in range(max_cy):
-                for x in range(max_cx):
-                    tile = game.get_tile(ax + x, ay + y)
-                    if not x_ray:
-                        tile = tile_hide.get(tile, tile)
-                    try:
-                        stdscr.addch(
-                            max_y - 2 - y,
-                            x * 2 + 1,
-                            TextUI.TILE_CHAR[tile],
-                            TextUI.tile_attr(tile),
-                        )
-                    except curses.error:
-                        pass
+            TextUI.print_grid(stdscr, game, ax, ay, x_ray)
 
             stdscr.move(max_y - 2 - cy, cx * 2 + 1)
             stdscr.refresh()
