@@ -142,19 +142,20 @@ class Minesweeper:
         """
         Get the tile associated with the cell at the given coordinate.
         """
-        if (x, y) in self.mines:
-            if (x, y) in self.uncovered:
-                tile = Tile.DETONATED
-            elif (x, y) in self.flags:
-                tile = Tile.FLAG_RIGHT
-            else:
-                tile = Tile.MINE
-        else:
-            if (x, y) in self.uncovered:
-                tile = Tile(len(self.adjacent(x, y) & self.mines))
-            elif (x, y) in self.flags:
-                tile = Tile.FLAG_WRONG
-            else:
-                tile = Tile.PLAIN
-
-        return tile
+        return (
+            (
+                Tile.DETONATED
+                if (x, y) in self.uncovered
+                else Tile.FLAG_RIGHT
+                if (x, y) in self.flags
+                else Tile.MINE
+            )
+            if (x, y) in self.mines
+            else (
+                Tile(len(self.adjacent(x, y) & self.mines))
+                if (x, y) in self.uncovered
+                else Tile.FLAG_WRONG
+                if (x, y) in self.flags
+                else Tile.PLAIN
+            )
+        )
