@@ -199,7 +199,7 @@ class TextUI:
                     ax, ay = -(max_cx // 2), -(max_cy // 2)
                     cx, cy = max_cx // 2, max_cy // 2
                 case curses.KEY_ENTER | "\r" | "\n":
-                    game.auto_uncover(ax + cx, ay + cy)
+                    game.uncover(ax + cx, ay + cy, auto=True)
                 case " ":
                     if not game.flag(ax + cx, ay + cy):
                         game.chord(ax + cx, ay + cy, auto=True)

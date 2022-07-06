@@ -55,10 +55,14 @@ class Minesweeper:
         """
         return set(product([x - 1, x, x + 1], [y - 1, y, y + 1])) - {(x, y)}
 
-    def uncover(self, x: int, y: int) -> bool:
+    def uncover(self, x: int, y: int, auto: bool = False) -> bool:
         """
         Uncover the cell at the given coordinate. Return true if the move is legal, false
         otherwise.
+
+        If `auto` is true, then iteratively chord any uncovered 0-tiles. This computation
+        can go on indefinitely for low densities, so the number of chords is capped at
+        `AUTO_LIMIT`.
         """
         if (x, y) not in self.uncovered and (x, y) not in self.flags:
             # only generate mines after first cell is uncovered
@@ -73,37 +77,24 @@ class Minesweeper:
             if (x, y) in self.mines:
                 self.detonated_count += 1
 
+            # automatically chord 0-tiles
+            if auto and self.get_tile(x, y) is Tile.ZERO:
+                zero_queue = deque([(x, y)])
+                zero_cache = {(x, y)}
+                chord_count = 0
+
+                while zero_queue and chord_count < Minesweeper.AUTO_LIMIT:
+                    zero = zero_queue.popleft()
+                    self.chord(*zero)
+                    chord_count += 1
+
+                    for (u, v) in self.adjacent(*zero) - zero_cache:
+                        if self.get_tile(u, v) is Tile.ZERO:
+                            zero_queue.append((u, v))
+                            zero_cache.add((u, v))
+
             return True
         return False
-
-    def auto_uncover(self, x: int, y: int) -> bool:
-        """
-        Uncover the cell at the given coordinate and iteratively uncover cells adjacent
-        to 0-tiles. This computation can go on indefinitely for low densities, so the
-        number of cells uncovered is capped at `AUTO_LIMIT`.
-
-        Return true if the move is legal, false otherwise.
-        """
-        num_uncovered = 0
-        queue = deque([(x, y)])  # queue ordered by proximity
-        cache = {(x, y)}  # avoid queueing the same thing twice
-
-        while queue and num_uncovered < Minesweeper.AUTO_LIMIT:
-            (x, y) = queue.popleft()
-            adj = self.adjacent(x, y)
-
-            if self.uncover(x, y) and (x, y) not in self.mines and not adj & self.mines:
-                num_uncovered += 1
-                for (u, v) in adj:
-                    if (
-                        (u, v) not in cache
-                        and (u, v) not in self.uncovered
-                        and (u, v) not in self.flags
-                    ):
-                        queue.append((u, v))
-                        cache.add((u, v))
-
-        return num_uncovered > 0
 
     def flag(self, x: int, y: int) -> bool:
         """
@@ -133,10 +124,7 @@ class Minesweeper:
             == len(adj & self.mines)
         ):
             for (u, v) in adj:
-                if auto:
-                    self.auto_uncover(u, v)
-                else:
-                    self.uncover(u, v)
+                self.uncover(u, v, auto)
 
             return True
         return False
