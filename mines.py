@@ -46,6 +46,7 @@ class Minesweeper:
         self.mines: set[tuple[int, int]] = set()
         self.uncovered: set[tuple[int, int]] = set()
         self.flags: set[tuple[int, int]] = set()
+        self.detonated_count = 0
 
     @staticmethod
     def adjacent(x: int, y: int) -> set[tuple[int, int]]:
@@ -69,6 +70,8 @@ class Minesweeper:
 
             # uncover the cell
             self.uncovered.add((x, y))
+            if (x, y) in self.mines:
+                self.detonated_count += 1
 
             return True
         return False

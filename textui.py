@@ -112,7 +112,7 @@ class TextUI:
         for y in range(max_cy):
             for x in range(max_cx):
                 tile = game.get_tile(ax + x, ay + y)
-                if not x_ray:
+                if not x_ray and game.detonated_count < 1:
                     tile = tile_hide.get(tile, tile)
                 stdscr.addstr(
                     max_y - 2 - y,
