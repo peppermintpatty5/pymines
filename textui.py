@@ -73,6 +73,8 @@ class TextUI:
     def __init__(self, stdscr: curses.window, game: Minesweeper) -> None:
         self.stdscr = stdscr
         self.game = game
+        self.ax, self.ay = (0, 0)
+        self.cx, self.cy = (0, 0)
 
     def confirm_yn(self, message: str) -> bool:
         """
@@ -98,7 +100,7 @@ class TextUI:
                 case _:
                     pass
 
-    def print_grid(self, ax: int, ay: int, x_ray: bool) -> None:
+    def print_grid(self, x_ray: bool) -> None:
         """
         Print grid to screen.
         """
@@ -112,7 +114,7 @@ class TextUI:
 
         for y in range(max_cy):
             for x in range(max_cx):
-                tile = self.game.get_tile(ax + x, ay + y)
+                tile = self.game.get_tile(self.ax + x, self.ay + y)
                 if not x_ray and self.game.detonated_count < 1:
                     tile = tile_hide.get(tile, tile)
                 self.stdscr.addstr(
@@ -142,65 +144,62 @@ class TextUI:
         init_colors()
         self.stdscr.clear()
 
-        ax, ay = 0, 0  # anchor point, bottom left corner
-        cx, cy = 0, 0  # cursor point, relative to anchor
-
         while True:
             max_y, max_x = self.stdscr.getmaxyx()
             max_cx, max_cy = max_x // 2, max_y - 1
 
-            self.print_status_bar(ax + cx, ay + cy)
-            self.print_grid(ax, ay, x_ray)
+            self.print_status_bar(self.ax + self.cx, self.ay + self.cy)
+            self.print_grid(x_ray)
 
-            self.stdscr.move(max_y - 2 - cy, cx * 2 + 1)
+            self.stdscr.move(max_y - 2 - self.cy, self.cx * 2 + 1)
             self.stdscr.refresh()
             curses.curs_set(1)
 
             match self.stdscr.get_wch():
                 case "w":
-                    ay += 1
+                    self.ay += 1
                 case "s":
-                    ay -= 1
+                    self.ay -= 1
                 case "a":
-                    ax -= 1
+                    self.ax -= 1
                 case "d":
-                    ax += 1
+                    self.ax += 1
                 case "W":
-                    ay += 5
+                    self.ay += 5
                 case "S":
-                    ay -= 5
+                    self.ay -= 5
                 case "A":
-                    ax -= 5
+                    self.ax -= 5
                 case "D":
-                    ax += 5
+                    self.ax += 5
                 case curses.KEY_UP:
-                    if cy + 1 >= max_cy:
-                        ay += 1
+                    if self.cy + 1 >= max_cy:
+                        self.ay += 1
                     else:
-                        cy += 1
+                        self.cy += 1
                 case curses.KEY_DOWN:
-                    if cy - 1 < 0:
-                        ay -= 1
+                    if self.cy - 1 < 0:
+                        self.ay -= 1
                     else:
-                        cy -= 1
+                        self.cy -= 1
                 case curses.KEY_LEFT:
-                    if cx - 1 < 0:
-                        ax -= 1
+                    if self.cx - 1 < 0:
+                        self.ax -= 1
                     else:
-                        cx -= 1
+                        self.cx -= 1
                 case curses.KEY_RIGHT:
-                    if cx + 1 >= max_cx:
-                        ax += 1
+                    if self.cx + 1 >= max_cx:
+                        self.ax += 1
                     else:
-                        cx += 1
+                        self.cx += 1
                 case "0":
-                    ax, ay = -(max_cx // 2), -(max_cy // 2)
-                    cx, cy = max_cx // 2, max_cy // 2
+                    self.ax, self.ay = -(max_cx // 2), -(max_cy // 2)
+                    self.cx, self.cy = max_cx // 2, max_cy // 2
                 case curses.KEY_ENTER | "\r" | "\n":
-                    self.game.uncover(ax + cx, ay + cy, auto=True)
+                    self.game.uncover(self.ax + self.cx, self.ay + self.cy, auto=True)
                 case " ":
-                    if not self.game.flag(ax + cx, ay + cy):
-                        self.game.chord(ax + cx, ay + cy, auto=True)
+                    if not self.game.flag(self.ax + self.cx, self.ay + self.cy):
+                        self.game.chord(self.ax + self.cx, self.ay + self.cy, auto=True)
                 case "r" | "R":
                     self.stdscr.clear()
                     self.stdscr.refresh()
