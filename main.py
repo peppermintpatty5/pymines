@@ -8,8 +8,8 @@ import argparse
 import curses
 import signal
 
+import textui
 from mines import Minesweeper
-from textui import TextUI
 
 
 if __name__ == "__main__":
@@ -36,4 +36,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     game = Minesweeper(args.density)
-    curses.wrapper(TextUI.main, game, x_ray=args.x_ray)
+    curses.wrapper(textui.main, game, args.x_ray)
