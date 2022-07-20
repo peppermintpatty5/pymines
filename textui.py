@@ -76,6 +76,67 @@ class TextUI:
         self.ax, self.ay = (0, 0)
         self.cx, self.cy = (0, 0)
 
+    def scroll_by(self, x: int, y: int) -> None:
+        """
+        Scroll window by given offset.
+        """
+        self.ax += x
+        self.ay += y
+
+    def scroll_to(self, x: int, y: int) -> None:
+        """
+        Scroll window to given location.
+        """
+        old_x, old_y = self.cursor_location()
+        self.scroll_by(x - old_x, y - old_y)
+
+    def cursor_location(self) -> tuple[int, int]:
+        """
+        Get the absolute location `(x, y)` of the cursor.
+        """
+        return (self.ax + self.cx, self.ay + self.cy)
+
+    def move_cursor(self, x: int, y: int) -> None:
+        """
+        Move cursor by given offset, scrolling the window to keep the cursor in bounds.
+        """
+        max_y, max_x = self.stdscr.getmaxyx()
+        max_cx = (max_x - 1) // 2
+        max_cy = max_y - 2
+
+        self.cx += x
+        self.cy += y
+
+        if self.cx < 0:
+            self.ax += self.cx
+            self.cx = 0
+        if self.cy < 0:
+            self.ay += self.cy
+            self.cy = 0
+        if self.cx > max_cx:
+            self.ax += self.cx - max_cx
+            self.cx = max_cx
+        if self.cy > max_cy:
+            self.ay += self.cy - max_cy
+            self.cy = max_cy
+
+    def center_cursor(self) -> None:
+        """
+        Adjust window and relative cursor location so that the cursor is centered within
+        the window. The absolute cursor location will not change.
+        """
+        max_y, max_x = self.stdscr.getmaxyx()
+        max_cx = (max_x - 1) // 2
+        max_cy = max_y - 2
+
+        dx = max_cx // 2 - self.cx
+        dy = max_cy // 2 - self.cy
+
+        self.cx += dx
+        self.cy += dy
+        self.ax -= dx
+        self.ay -= dy
+
     def confirm_yn(self, message: str) -> bool:
         """
         Prompts the user for yes/no confirmation with the given message. Returns true if
@@ -124,7 +185,7 @@ class TextUI:
                     tile_attr(tile),
                 )
 
-    def print_status_bar(self, x: int, y: int) -> None:
+    def print_status_bar(self) -> None:
         """
         Print status bar showing cursor location and possibly other information.
         """
@@ -133,7 +194,7 @@ class TextUI:
         self.stdscr.insstr(
             max_y - 1,
             0,
-            f"{(x, y)}".ljust(max_x),
+            f"{self.cursor_location()}".ljust(max_x),
             curses.color_pair(51),
         )
 
@@ -145,10 +206,9 @@ class TextUI:
         self.stdscr.clear()
 
         while True:
-            max_y, max_x = self.stdscr.getmaxyx()
-            max_cx, max_cy = max_x // 2, max_y - 1
+            max_y, _ = self.stdscr.getmaxyx()
 
-            self.print_status_bar(self.ax + self.cx, self.ay + self.cy)
+            self.print_status_bar()
             self.print_grid(x_ray)
 
             self.stdscr.move(max_y - 2 - self.cy, self.cx * 2 + 1)
@@ -157,53 +217,42 @@ class TextUI:
 
             match self.stdscr.get_wch():
                 case "w":
-                    self.ay += 1
+                    self.scroll_by(0, 1)
                 case "s":
-                    self.ay -= 1
+                    self.scroll_by(0, -1)
                 case "a":
-                    self.ax -= 1
+                    self.scroll_by(-1, 0)
                 case "d":
-                    self.ax += 1
+                    self.scroll_by(1, 0)
                 case "W":
-                    self.ay += 5
+                    self.scroll_by(0, 5)
                 case "S":
-                    self.ay -= 5
+                    self.scroll_by(0, -5)
                 case "A":
-                    self.ax -= 5
+                    self.scroll_by(-5, 0)
                 case "D":
-                    self.ax += 5
+                    self.scroll_by(5, 0)
                 case curses.KEY_UP:
-                    if self.cy + 1 >= max_cy:
-                        self.ay += 1
-                    else:
-                        self.cy += 1
+                    self.move_cursor(0, 1)
                 case curses.KEY_DOWN:
-                    if self.cy - 1 < 0:
-                        self.ay -= 1
-                    else:
-                        self.cy -= 1
+                    self.move_cursor(0, -1)
                 case curses.KEY_LEFT:
-                    if self.cx - 1 < 0:
-                        self.ax -= 1
-                    else:
-                        self.cx -= 1
+                    self.move_cursor(-1, 0)
                 case curses.KEY_RIGHT:
-                    if self.cx + 1 >= max_cx:
-                        self.ax += 1
-                    else:
-                        self.cx += 1
+                    self.move_cursor(1, 0)
                 case "0":
-                    self.ax, self.ay = -(max_cx // 2), -(max_cy // 2)
-                    self.cx, self.cy = max_cx // 2, max_cy // 2
+                    self.scroll_to(0, 0)
+                case "c":
+                    self.center_cursor()
                 case curses.KEY_ENTER | "\r" | "\n":
-                    self.game.uncover(self.ax + self.cx, self.ay + self.cy, auto=True)
+                    self.game.uncover(*self.cursor_location(), auto=True)
                 case " ":
-                    if not self.game.flag(self.ax + self.cx, self.ay + self.cy):
-                        self.game.chord(self.ax + self.cx, self.ay + self.cy, auto=True)
-                case "r" | "R":
+                    if not self.game.flag(*self.cursor_location()):
+                        self.game.chord(*self.cursor_location(), auto=True)
+                case "r":
                     self.stdscr.clear()
                     self.stdscr.refresh()
-                case "q" | "Q":
+                case "q":
                     if self.confirm_yn("Quit?"):
                         return
                     self.stdscr.erase()
