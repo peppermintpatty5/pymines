@@ -51,7 +51,8 @@ def init_colors() -> None:
         curses.init_pair(tile.value + 1, fg, -1)
 
     curses.init_pair(50, curses.COLOR_BLACK, curses.COLOR_YELLOW)
-    curses.init_pair(51, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    curses.init_pair(51, curses.COLOR_BLACK, curses.COLOR_CYAN)
+    curses.init_pair(52, curses.COLOR_BLACK, curses.COLOR_MAGENTA)
 
 
 def tile_attr(tile: Tile) -> int:
@@ -70,9 +71,10 @@ class TextUI:
     Text user interface.
     """
 
-    def __init__(self, stdscr: curses.window, game: Minesweeper) -> None:
+    def __init__(self, stdscr: curses.window, game: Minesweeper, lives: int) -> None:
         self.stdscr = stdscr
         self.game = game
+        self.lives = lives
         self.ax, self.ay = (0, 0)
         self.cx, self.cy = (0, 0)
 
@@ -161,7 +163,7 @@ class TextUI:
                 case _:
                     pass
 
-    def print_grid(self, lives: int) -> None:
+    def print_grid(self) -> None:
         """
         Print grid to screen.
         """
@@ -176,7 +178,7 @@ class TextUI:
         for y in range(max_cy):
             for x in range(max_cx):
                 tile = self.game.get_tile(self.ax + x, self.ay + y)
-                if lives < 0 or self.game.detonated_count < lives:
+                if self.lives < 0 or self.game.detonated_count < self.lives:
                     tile = tile_hide.get(tile, tile)
                 self.stdscr.addstr(
                     max_y - 2 - y,
@@ -187,18 +189,30 @@ class TextUI:
 
     def print_status_bar(self) -> None:
         """
-        Print status bar showing cursor location and possibly other information.
+        Print status bar to screen.
         """
         max_y, max_x = self.stdscr.getmaxyx()
+        x, y = self.cursor_location()
 
-        self.stdscr.insstr(
-            max_y - 1,
-            0,
-            f"{self.cursor_location()}".ljust(max_x),
-            curses.color_pair(51),
+        lives_info = (
+            "Inf" if self.lives < 0 else f"{self.lives - self.game.detonated_count}"
         )
 
-    def run(self, lives: int) -> None:
+        section_a = f" {self.game.density * 100:.1f}% "
+        section_b = f" Lives: {lives_info:<4} Score: {len(self.game.uncovered)}"
+        section_z = f"x: {x:<4} y: {y:<4} "
+
+        self.stdscr.insstr(max_y - 1, 0, section_b.ljust(max_x), curses.color_pair(51))
+        self.stdscr.insstr(max_y - 1, 0, section_a, curses.color_pair(52))
+        if len(section_z) < max_x:
+            self.stdscr.insstr(
+                max_y - 1,
+                max_x - len(section_z),
+                section_z,
+                curses.color_pair(51),
+            )
+
+    def run(self) -> None:
         """
         Run the game.
         """
@@ -210,7 +224,7 @@ class TextUI:
             max_y, _ = self.stdscr.getmaxyx()
 
             self.print_status_bar()
-            self.print_grid(lives)
+            self.print_grid()
 
             self.stdscr.move(max_y - 2 - self.cy, self.cx * 2 + 1)
             self.stdscr.refresh()
@@ -264,4 +278,4 @@ def main(stdscr: curses.window, game: Minesweeper, lives: int) -> None:
     Entry point for graphical minesweeper game. Call this function using
     `curses.wrapper`.
     """
-    return TextUI(stdscr, game).run(lives)
+    return TextUI(stdscr, game, lives).run()
