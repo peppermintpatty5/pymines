@@ -161,7 +161,7 @@ class TextUI:
                 case _:
                     pass
 
-    def print_grid(self, x_ray: bool) -> None:
+    def print_grid(self, lives: int) -> None:
         """
         Print grid to screen.
         """
@@ -176,7 +176,7 @@ class TextUI:
         for y in range(max_cy):
             for x in range(max_cx):
                 tile = self.game.get_tile(self.ax + x, self.ay + y)
-                if not x_ray and self.game.detonated_count < 1:
+                if lives < 0 or self.game.detonated_count < lives:
                     tile = tile_hide.get(tile, tile)
                 self.stdscr.addstr(
                     max_y - 2 - y,
@@ -198,18 +198,19 @@ class TextUI:
             curses.color_pair(51),
         )
 
-    def run(self, x_ray: bool = False) -> None:
+    def run(self, lives: int) -> None:
         """
         Run the game.
         """
         init_colors()
         self.stdscr.clear()
+        self.center_cursor()
 
         while True:
             max_y, _ = self.stdscr.getmaxyx()
 
             self.print_status_bar()
-            self.print_grid(x_ray)
+            self.print_grid(lives)
 
             self.stdscr.move(max_y - 2 - self.cy, self.cx * 2 + 1)
             self.stdscr.refresh()
@@ -258,9 +259,9 @@ class TextUI:
                     self.stdscr.erase()
 
 
-def main(stdscr: curses.window, game: Minesweeper, x_ray: bool) -> None:
+def main(stdscr: curses.window, game: Minesweeper, lives: int) -> None:
     """
     Entry point for graphical minesweeper game. Call this function using
     `curses.wrapper`.
     """
-    return TextUI(stdscr, game).run(x_ray)
+    return TextUI(stdscr, game).run(lives)

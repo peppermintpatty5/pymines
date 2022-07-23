@@ -22,18 +22,18 @@ if __name__ == "__main__":
     parser.add_argument(
         "-d",
         "--density",
-        help="determines what proportion of cells are mines, default 0.17",
+        help="the proportion of cells that are mines, default is 0.17",
         type=float,
         default=0.17,
     )
     parser.add_argument(
-        "-x",
-        "--x-ray",
-        help="enables X-ray cheats",
-        action="store_true",
-        dest="x_ray",
+        "-l",
+        "--lives",
+        help="default is 1 life, negative values are treated as infinity",
+        type=int,
+        default=1,
     )
     args = parser.parse_args()
 
     game = Minesweeper(args.density)
-    curses.wrapper(textui.main, game, args.x_ray)
+    curses.wrapper(textui.main, game, args.lives)
