@@ -8,6 +8,13 @@ from itertools import product
 from random import random
 
 
+def adjacent(x: int, y: int) -> set[tuple[int, int]]:
+    """
+    Return the set of 8 adjacent coordinates.
+    """
+    return set(product([x - 1, x, x + 1], [y - 1, y, y + 1])) - {(x, y)}
+
+
 class Tile(Enum):
     """
     A tile uniquely describes a cell. Numeric tiles have corresponding numeric
@@ -46,13 +53,6 @@ class Minesweeper:
         self.flags: set[tuple[int, int]] = set()
         self.detonated_count = 0
 
-    @staticmethod
-    def adjacent(x: int, y: int) -> set[tuple[int, int]]:
-        """
-        Return the set of 8 adjacent coordinates.
-        """
-        return set(product([x - 1, x, x + 1], [y - 1, y, y + 1])) - {(x, y)}
-
     def uncover(self, x: int, y: int) -> bool:
         """
         Uncover the cell at the given coordinate. Return true if the move is legal, false
@@ -61,8 +61,8 @@ class Minesweeper:
         if (x, y) not in self.uncovered and (x, y) not in self.flags:
             # only generate mines after first cell is uncovered
             if self.uncovered:
-                for (u, v) in (self.adjacent(x, y) | {(x, y)}) - self.uncovered:
-                    if not self.adjacent(u, v) & self.uncovered:
+                for (u, v) in (adjacent(x, y) | {(x, y)}) - self.uncovered:
+                    if not adjacent(u, v) & self.uncovered:
                         if random() < self.density:
                             self.mines.add((u, v))
 
@@ -93,7 +93,7 @@ class Minesweeper:
         Perform a "chord" move at the given coordinate. Return true if the move is legal,
         false otherwise.
         """
-        adj = self.adjacent(x, y)
+        adj = adjacent(x, y)
 
         if (
             (x, y) in self.uncovered
@@ -121,7 +121,7 @@ class Minesweeper:
             )
             if (x, y) in self.mines
             else (
-                Tile(len(self.adjacent(x, y) & self.mines))
+                Tile(len(adjacent(x, y) & self.mines))
                 if (x, y) in self.uncovered
                 else Tile.FLAG_WRONG
                 if (x, y) in self.flags
@@ -144,7 +144,7 @@ class Minesweeper:
             self.chord(x, y)
             chord_count += 1
 
-            for (u, v) in self.adjacent(x, y) - cache:
+            for (u, v) in adjacent(x, y) - cache:
                 if self.get_tile(u, v) is Tile.ZERO:
                     queue.append((u, v))
                     cache.add((u, v))
