@@ -260,10 +260,11 @@ class TextUI:
                 case "c":
                     self.center_cursor()
                 case curses.KEY_ENTER | "\r" | "\n":
-                    self.game.uncover(*self.cursor_location(), auto=True)
+                    if self.game.uncover(*self.cursor_location()):
+                        self.game.auto_chord(*self.cursor_location())
                 case " ":
                     if not self.game.flag(*self.cursor_location()):
-                        self.game.chord(*self.cursor_location(), auto=True)
+                        self.game.auto_chord(*self.cursor_location())
                 case "r":
                     self.stdscr.clear()
                     self.stdscr.refresh()

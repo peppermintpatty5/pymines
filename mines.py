@@ -35,8 +35,6 @@ class Minesweeper:
     An infinite game of minesweeper.
     """
 
-    AUTO_LIMIT = 1 << 16
-
     def __init__(self, density: float) -> None:
         """
         The density parameter determines what proportion of cells are mines and shall be
@@ -55,14 +53,10 @@ class Minesweeper:
         """
         return set(product([x - 1, x, x + 1], [y - 1, y, y + 1])) - {(x, y)}
 
-    def uncover(self, x: int, y: int, auto: bool = False) -> bool:
+    def uncover(self, x: int, y: int) -> bool:
         """
         Uncover the cell at the given coordinate. Return true if the move is legal, false
         otherwise.
-
-        If `auto` is true, then iteratively chord any uncovered 0-tiles. This computation
-        can go on indefinitely for low densities, so the number of chords is capped at
-        `AUTO_LIMIT`.
         """
         if (x, y) not in self.uncovered and (x, y) not in self.flags:
             # only generate mines after first cell is uncovered
@@ -76,22 +70,6 @@ class Minesweeper:
             self.uncovered.add((x, y))
             if (x, y) in self.mines:
                 self.detonated_count += 1
-
-            # automatically chord 0-tiles
-            if auto and self.get_tile(x, y) is Tile.ZERO:
-                zero_queue = deque([(x, y)])
-                zero_cache = {(x, y)}
-                chord_count = 0
-
-                while zero_queue and chord_count < Minesweeper.AUTO_LIMIT:
-                    zero = zero_queue.popleft()
-                    self.chord(*zero)
-                    chord_count += 1
-
-                    for (u, v) in self.adjacent(*zero) - zero_cache:
-                        if self.get_tile(u, v) is Tile.ZERO:
-                            zero_queue.append((u, v))
-                            zero_cache.add((u, v))
 
             return True
         return False
@@ -110,7 +88,7 @@ class Minesweeper:
             return True
         return False
 
-    def chord(self, x: int, y: int, auto: bool = False) -> bool:
+    def chord(self, x: int, y: int) -> bool:
         """
         Perform a "chord" move at the given coordinate. Return true if the move is legal,
         false otherwise.
@@ -124,7 +102,7 @@ class Minesweeper:
             == len(adj & self.mines)
         ):
             for (u, v) in adj:
-                self.uncover(u, v, auto)
+                self.uncover(u, v)
 
             return True
         return False
@@ -150,3 +128,23 @@ class Minesweeper:
                 else Tile.PLAIN
             )
         )
+
+    def auto_chord(self, x: int, y: int, limit: int = 1 << 16) -> None:
+        """
+        Chord the cell at the given coordinate and iteratively chord any uncovered
+        0-tiles. This computation can go on indefinitely for low densities, so the number
+        of chords is capped at `limit`.
+        """
+        queue = deque([(x, y)])
+        cache = {(x, y)}
+        chord_count = 0
+
+        while queue and chord_count < limit:
+            x, y = queue.popleft()
+            self.chord(x, y)
+            chord_count += 1
+
+            for (u, v) in self.adjacent(x, y) - cache:
+                if self.get_tile(u, v) is Tile.ZERO:
+                    queue.append((u, v))
+                    cache.add((u, v))
