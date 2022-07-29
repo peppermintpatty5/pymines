@@ -103,8 +103,8 @@ class TextUI:
         Move cursor by given offset, scrolling the window to keep the cursor in bounds.
         """
         max_y, max_x = self.stdscr.getmaxyx()
-        max_cx = (max_x - 1) // 2
-        max_cy = max_y - 2
+        max_cx = max_x // 2
+        max_cy = max_y - 1
 
         self.cx += x
         self.cy += y
@@ -115,12 +115,12 @@ class TextUI:
         if self.cy < 0:
             self.ay += self.cy
             self.cy = 0
-        if self.cx > max_cx:
-            self.ax += self.cx - max_cx
-            self.cx = max_cx
-        if self.cy > max_cy:
-            self.ay += self.cy - max_cy
-            self.cy = max_cy
+        if self.cx >= max_cx:
+            self.ax += self.cx - max_cx + 1
+            self.cx = max_cx - 1
+        if self.cy >= max_cy:
+            self.ay += self.cy - max_cy + 1
+            self.cy = max_cy - 1
 
     def center_cursor(self) -> None:
         """
@@ -128,8 +128,8 @@ class TextUI:
         the window. The absolute cursor location will not change.
         """
         max_y, max_x = self.stdscr.getmaxyx()
-        max_cx = (max_x - 1) // 2
-        max_cy = max_y - 2
+        max_cx = max_x // 2
+        max_cy = max_y - 1
 
         dx = max_cx // 2 - self.cx
         dy = max_cy // 2 - self.cy
