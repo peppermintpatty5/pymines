@@ -43,27 +43,20 @@ TILE_COLORS = {
 
 def init_colors() -> None:
     """
-    Initialize colors for user interface.
+    Initialize color pairs for 8 basic colors.
     """
     curses.use_default_colors()
 
-    for tile, (fg, _) in TILE_COLORS.items():
-        curses.init_pair(tile.value + 1, fg, -1)
-
-    curses.init_pair(50, curses.COLOR_BLACK, curses.COLOR_YELLOW)
-    curses.init_pair(51, curses.COLOR_BLACK, curses.COLOR_CYAN)
-    curses.init_pair(52, curses.COLOR_BLACK, curses.COLOR_MAGENTA)
+    for color in range(8):
+        curses.init_pair(color + 1, color, -1)
 
 
-def tile_attr(tile: Tile) -> int:
+def get_color(fg: int, bold: bool) -> int:
     """
-    Maps each tile to an attribute which can be used directly in `attrset`.
+    Return the attribute value for displaying text in the specified foreground color on
+    the default background color.
     """
-    _, bold = TILE_COLORS[tile]
-
-    return curses.color_pair(tile.value + 1) | (
-        curses.A_BOLD if bold else curses.A_NORMAL
-    )
+    return curses.color_pair(fg + 1) | (curses.A_BOLD if bold else curses.A_NORMAL)
 
 
 class TextUI:
@@ -149,8 +142,8 @@ class TextUI:
         self.stdscr.insstr(
             max_y - 1,
             0,
-            f"{message} [y/n]".ljust(max_x),
-            curses.color_pair(50),
+            f" {message} [y/n]".ljust(max_x),
+            get_color(curses.COLOR_YELLOW, False) | curses.A_REVERSE,
         )
         curses.curs_set(0)
 
@@ -184,7 +177,7 @@ class TextUI:
                     max_y - 2 - y,
                     x * 2,
                     " " + TILE_CHAR[tile],
-                    tile_attr(tile),
+                    get_color(*TILE_COLORS[tile]),
                 )
 
     def print_status_bar(self) -> None:
@@ -202,14 +195,24 @@ class TextUI:
         section_b = f" Lives: {lives_info:<4} Score: {len(self.game.uncovered)}"
         section_z = f"x: {x:<4} y: {y:<4} "
 
-        self.stdscr.insstr(max_y - 1, 0, section_b.ljust(max_x), curses.color_pair(51))
-        self.stdscr.insstr(max_y - 1, 0, section_a, curses.color_pair(52))
+        self.stdscr.insstr(
+            max_y - 1,
+            0,
+            section_b.ljust(max_x),
+            get_color(curses.COLOR_CYAN, False) | curses.A_REVERSE,
+        )
+        self.stdscr.insstr(
+            max_y - 1,
+            0,
+            section_a,
+            get_color(curses.COLOR_MAGENTA, False) | curses.A_REVERSE,
+        )
         if len(section_z) < max_x:
             self.stdscr.insstr(
                 max_y - 1,
                 max_x - len(section_z),
                 section_z,
-                curses.color_pair(51),
+                get_color(curses.COLOR_CYAN, False) | curses.A_REVERSE,
             )
 
     def run(self) -> None:
@@ -228,7 +231,7 @@ class TextUI:
 
             self.stdscr.move(max_y - 2 - self.cy, self.cx * 2 + 1)
             self.stdscr.refresh()
-            curses.curs_set(1)
+            curses.curs_set(2)
 
             match self.stdscr.get_wch():
                 case "w":
