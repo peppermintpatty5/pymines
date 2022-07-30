@@ -263,11 +263,16 @@ class TextUI:
                 case "c":
                     self.center_cursor()
                 case curses.KEY_ENTER | "\r" | "\n":
-                    if self.game.uncover(*self.cursor_location()):
-                        self.game.auto_chord(*self.cursor_location())
+                    x, y = self.cursor_location()
+                    if (
+                        self.game.uncover(x, y)
+                        and self.game.get_tile(x, y) is Tile.ZERO
+                    ):
+                        self.game.auto_chord(x, y)
                 case " ":
-                    if not self.game.flag(*self.cursor_location()):
-                        self.game.auto_chord(*self.cursor_location())
+                    x, y = self.cursor_location()
+                    if not self.game.flag(x, y):
+                        self.game.auto_chord(x, y)
                 case "r":
                     self.stdscr.clear()
                     self.stdscr.refresh()
