@@ -45,10 +45,16 @@ def init_colors() -> None:
     """
     Initialize color pairs for 8 basic colors.
     """
-    curses.use_default_colors()
+    try:
+        curses.use_default_colors()
+    except curses.error:
+        background = 0
+    else:
+        background = -1
 
-    for color in range(8):
-        curses.init_pair(color + 1, color, -1)
+    if curses.has_colors():
+        for color in range(8):
+            curses.init_pair(color + 1, color, background)
 
 
 def get_color(fg: int, bold: bool) -> int:
@@ -56,7 +62,11 @@ def get_color(fg: int, bold: bool) -> int:
     Return the attribute value for displaying text in the specified foreground color on
     the default background color.
     """
-    return curses.color_pair(fg + 1) | (curses.A_BOLD if bold else curses.A_NORMAL)
+    return (
+        curses.color_pair(fg + 1) | (curses.A_BOLD if bold else curses.A_NORMAL)
+        if curses.has_colors()
+        else curses.color_pair(0)
+    )
 
 
 class TextUI:
@@ -145,7 +155,10 @@ class TextUI:
             f" {message} [y/n]".ljust(max_x),
             get_color(curses.COLOR_YELLOW, False) | curses.A_REVERSE,
         )
-        curses.curs_set(0)
+        try:
+            curses.curs_set(0)
+        except curses.error:
+            pass
 
         while True:
             match self.stdscr.get_wch():
@@ -231,7 +244,10 @@ class TextUI:
 
             self.stdscr.move(max_y - 2 - self.cy, self.cx * 2 + 1)
             self.stdscr.refresh()
-            curses.curs_set(2)
+            try:
+                curses.curs_set(2)
+            except curses.error:
+                pass
 
             match self.stdscr.get_wch():
                 case "w":
