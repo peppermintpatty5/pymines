@@ -3,6 +3,7 @@ Text user interface
 """
 
 import curses
+from enum import Enum, auto
 
 from mines import Minesweeper, Tile
 
@@ -142,32 +143,22 @@ class TextUI:
         self.ax -= dx
         self.ay -= dy
 
-    def confirm_yn(self, message: str) -> bool:
+    def print_quit_confirm(self) -> None:
         """
-        Prompts the user for yes/no confirmation with the given message. Returns true if
-        the user chose "yes", false if the user chose "no".
+        Print quit confirmation status line.
         """
         max_y, max_x = self.stdscr.getmaxyx()
 
         self.stdscr.insstr(
             max_y - 1,
             0,
-            f" {message} [y/n]".ljust(max_x),
+            " Quit? [y/n]".ljust(max_x),
             get_color(curses.COLOR_YELLOW, False) | curses.A_REVERSE,
         )
         try:
             curses.curs_set(0)
         except curses.error:
             pass
-
-        while True:
-            match self.stdscr.get_wch():
-                case "y" | "Y":
-                    return True
-                case "n" | "N":
-                    return False
-                case _:
-                    pass
 
     def print_grid(self) -> None:
         """
@@ -232,70 +223,95 @@ class TextUI:
         """
         Run the game.
         """
+
+        class State(Enum):
+            """
+            Possible game states
+            """
+
+            PLAY = auto()
+            QUIT_CONFIRM = auto()
+            QUIT = auto()
+
         init_colors()
         self.stdscr.clear()
         self.center_cursor()
 
+        state = State.PLAY
+
         while True:
             max_y, _ = self.stdscr.getmaxyx()
 
-            self.print_status_bar()
             self.print_grid()
-
-            self.stdscr.move(max_y - 2 - self.cy, self.cx * 2 + 1)
             self.stdscr.refresh()
+
             try:
                 curses.curs_set(2)
             except curses.error:
                 pass
 
-            match self.stdscr.get_wch():
-                case "w":
-                    self.scroll_by(0, 1)
-                case "s":
-                    self.scroll_by(0, -1)
-                case "a":
-                    self.scroll_by(-1, 0)
-                case "d":
-                    self.scroll_by(1, 0)
-                case "W":
-                    self.scroll_by(0, 5)
-                case "S":
-                    self.scroll_by(0, -5)
-                case "A":
-                    self.scroll_by(-5, 0)
-                case "D":
-                    self.scroll_by(5, 0)
-                case curses.KEY_UP:
-                    self.move_cursor(0, 1)
-                case curses.KEY_DOWN:
-                    self.move_cursor(0, -1)
-                case curses.KEY_LEFT:
-                    self.move_cursor(-1, 0)
-                case curses.KEY_RIGHT:
-                    self.move_cursor(1, 0)
-                case "0":
-                    self.scroll_to(0, 0)
-                case "c":
-                    self.center_cursor()
-                case curses.KEY_ENTER | "\r" | "\n":
-                    x, y = self.cursor_location()
-                    if (
-                        self.game.uncover(x, y)
-                        and self.game.get_tile(x, y) is Tile.ZERO
-                    ):
-                        self.game.auto_chord(x, y)
-                case " ":
-                    x, y = self.cursor_location()
-                    if not self.game.flag(x, y):
-                        self.game.auto_chord(x, y)
-                case "r":
-                    self.stdscr.clear()
-                    self.stdscr.refresh()
-                case "q":
-                    if self.confirm_yn("Quit?"):
-                        return
-                    self.stdscr.erase()
+            match state:
+                case State.PLAY:
+                    self.print_status_bar()
+                    self.stdscr.move(max_y - 2 - self.cy, self.cx * 2 + 1)
+
+                    match self.stdscr.get_wch():
+                        case "w":
+                            self.scroll_by(0, 1)
+                        case "s":
+                            self.scroll_by(0, -1)
+                        case "a":
+                            self.scroll_by(-1, 0)
+                        case "d":
+                            self.scroll_by(1, 0)
+                        case "W":
+                            self.scroll_by(0, 5)
+                        case "S":
+                            self.scroll_by(0, -5)
+                        case "A":
+                            self.scroll_by(-5, 0)
+                        case "D":
+                            self.scroll_by(5, 0)
+                        case curses.KEY_UP:
+                            self.move_cursor(0, 1)
+                        case curses.KEY_DOWN:
+                            self.move_cursor(0, -1)
+                        case curses.KEY_LEFT:
+                            self.move_cursor(-1, 0)
+                        case curses.KEY_RIGHT:
+                            self.move_cursor(1, 0)
+                        case "0":
+                            self.scroll_to(0, 0)
+                        case "c":
+                            self.center_cursor()
+                        case curses.KEY_ENTER | "\r" | "\n":
+                            x, y = self.cursor_location()
+                            if (
+                                self.game.uncover(x, y)
+                                and self.game.get_tile(x, y) is Tile.ZERO
+                            ):
+                                self.game.auto_chord(x, y)
+                        case " ":
+                            x, y = self.cursor_location()
+                            if not self.game.flag(x, y):
+                                self.game.auto_chord(x, y)
+                        case "r":
+                            self.stdscr.clear()
+                            self.stdscr.refresh()
+                        case "q":
+                            state = State.QUIT_CONFIRM
+                case State.QUIT_CONFIRM:
+                    self.print_quit_confirm()
+
+                    match self.stdscr.get_wch():
+                        case "y" | "Y":
+                            state = State.QUIT
+                        case "n" | "N":
+                            state = State.PLAY
+                        case _:
+                            pass
+                case State.QUIT:
+                    return
 
 
 def main(stdscr: curses.window, game: Minesweeper, lives: int) -> None:
