@@ -145,6 +145,6 @@ class Minesweeper:
             chord_count += 1
 
             for (u, v) in adjacent(x, y) - cache:
-                if self.get_tile(u, v) is Tile.ZERO:
+                if self.get_tile(u, v) is Tile.ZERO and adjacent(u, v) - self.uncovered:
                     queue.append((u, v))
                     cache.add((u, v))
