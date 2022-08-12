@@ -2,6 +2,8 @@
 
 Infinite minesweeper game
 
+![In-game screenshot of terminal](imgs/screenshot.png)
+
 ## About
 
 This game implementation uses sets instead of arrays:
@@ -50,7 +52,7 @@ python3 main.py -h
 | :-------------- | :--------------------------- |
 | `w` `s` `a` `d` | Scroll window (fine)         |
 | `W` `S` `A` `D` | Scroll window (coarse)       |
-| `↑` `↓` `←` `→` | Move cursor                  |
+| Arrow keys      | Move cursor                  |
 | `0`             | Scroll to (0, 0)             |
 | `c`             | Center cursor                |
 | Enter           | Uncover cell at cursor       |
