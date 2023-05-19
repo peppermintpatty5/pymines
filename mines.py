@@ -53,18 +53,28 @@ class Minesweeper:
         self.flags: set[tuple[int, int]] = set()
         self.detonated_count = 0
 
+    def _generate_mine(self, x: int, y: int) -> None:
+        """
+        Randomly generate a mine at the given coordinate if the cell is not adjacent to
+        any uncovered cells.
+        """
+        if not adjacent(x, y) & self.uncovered:
+            if random() < self.density:
+                self.mines.add((x, y))
+
     def uncover(self, x: int, y: int) -> bool:
         """
         Uncover the cell at the given coordinate. Return true if the move is legal, false
         otherwise.
         """
         if (x, y) not in self.uncovered and (x, y) not in self.flags:
-            # only generate mines after first cell is uncovered
+            # the first cell uncovered should never be a mine
             if self.uncovered:
-                for (u, v) in (adjacent(x, y) | {(x, y)}) - self.uncovered:
-                    if not adjacent(u, v) & self.uncovered:
-                        if random() < self.density:
-                            self.mines.add((u, v))
+                self._generate_mine(x, y)
+
+            # generate mines in adjacent cells
+            for (u, v) in adjacent(x, y) - self.uncovered:
+                self._generate_mine(u, v)
 
             # uncover the cell
             self.uncovered.add((x, y))
