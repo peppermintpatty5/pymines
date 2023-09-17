@@ -22,15 +22,13 @@ The result of this simple change is that the game can progress indefinitely with
 
 ### C++ ~~Rant~~ Comparison
 
-I originally prototyped this game in Python, then wrote it [in C++](https://github.com/peppermintpatty5/mines), and then rewrote it here in Python.
+I originally prototyped this game in Python, then wrote it [in C++](https://github.com/peppermintpatty5/cpp-mines), and then rewrote it here in Python.
 
 This program was much easier to write in Python than in C++. For such a bloated language, C++ lacks many useful features.
 
 1. C++ `std::unordered_set` cannot be used directly with `std::pair`. I had to write a hash function that basically treated `std::pair<long, long>` as a string.
 2. Python integers have unlimited precision whereas C++ has no such data type. Expect to see integer overflow once you move the cursor past `LONG_MIN` or `LONG_MAX`.
 3. It took until C++20 for `std::unordered_set` to get the [`contains`](https://en.cppreference.com/w/cpp/container/unordered_set/contains) method. Previous versions of C++ had to use the iterator syntax.
-
-Surprisingly, this game also runs faster in Python. I have no idea why this is the case because the overall logic is the same.
 
 ## Installation
 
@@ -48,16 +46,16 @@ python3 main.py -h
 
 ### Controls
 
-| Key             | Action                       |
-| :-------------- | :--------------------------- |
+|       Key       | Action                       |
+| :-------------: | :--------------------------- |
+|   Arrow keys    | Move cursor                  |
+|      Enter      | Uncover cell at cursor       |
+|      Space      | Flag or chord cell at cursor |
 | `w` `s` `a` `d` | Scroll window (fine)         |
 | `W` `S` `A` `D` | Scroll window (coarse)       |
-| Arrow keys      | Move cursor                  |
-| `0`             | Scroll to (0, 0)             |
-| `c`             | Center cursor                |
-| Enter           | Uncover cell at cursor       |
-| Space           | Flag or chord cell at cursor |
-| `r`             | Refresh window               |
-| `q`             | Quit                         |
+|       `0`       | Scroll to (0, 0)             |
+|       `c`       | Center window to cursor      |
+|       `r`       | Refresh window               |
+|       `q`       | Quit                         |
 
-Have fun! :smile:
+Have fun! :infinity:
