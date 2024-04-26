@@ -5,7 +5,7 @@ Text user interface
 import curses
 from enum import Enum, auto
 
-from mines import Minesweeper, Tile
+from .mines import Minesweeper, Tile
 
 
 TILE_CHAR = {

@@ -8,8 +8,8 @@ import argparse
 import curses
 import signal
 
-import textui
-from mines import Minesweeper
+from . import textui
+from .mines import Minesweeper
 
 
 if __name__ == "__main__":
