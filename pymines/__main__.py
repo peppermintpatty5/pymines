@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Command-line interface for minesweeper game.
 """
@@ -17,6 +15,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     parser = argparse.ArgumentParser(
+        prog="pymines",
         description="Play an unending game of minesweeper",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )

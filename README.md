@@ -38,10 +38,10 @@ This project requires Python 3.10 or newer and uses only the standard library. Y
 
 ## Usage
 
-Simply run `main.py`. Use the `-h` flag to see the help text.
+Use the `-h` flag to see the help text.
 
 ```sh
-python3 main.py -h
+python3 -m pymines -h
 ```
 
 ### Controls
