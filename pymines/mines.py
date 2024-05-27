@@ -73,7 +73,7 @@ class Minesweeper:
                 self._generate_mine(x, y)
 
             # generate mines in adjacent cells
-            for (u, v) in adjacent(x, y) - self.uncovered:
+            for u, v in adjacent(x, y) - self.uncovered:
                 self._generate_mine(u, v)
 
             # uncover the cell
@@ -111,7 +111,7 @@ class Minesweeper:
             and len(adj & self.flags) + len(adj & self.uncovered & self.mines)
             == len(adj & self.mines)
         ):
-            for (u, v) in adj:
+            for u, v in adj:
                 self.uncover(u, v)
 
             return True
@@ -125,17 +125,13 @@ class Minesweeper:
             (
                 Tile.DETONATED
                 if (x, y) in self.uncovered
-                else Tile.FLAG_RIGHT
-                if (x, y) in self.flags
-                else Tile.MINE
+                else Tile.FLAG_RIGHT if (x, y) in self.flags else Tile.MINE
             )
             if (x, y) in self.mines
             else (
                 Tile(len(adjacent(x, y) & self.mines))
                 if (x, y) in self.uncovered
-                else Tile.FLAG_WRONG
-                if (x, y) in self.flags
-                else Tile.PLAIN
+                else Tile.FLAG_WRONG if (x, y) in self.flags else Tile.PLAIN
             )
         )
 
@@ -154,7 +150,7 @@ class Minesweeper:
             self.chord(x, y)
             chord_count += 1
 
-            for (u, v) in adjacent(x, y) - cache:
+            for u, v in adjacent(x, y) - cache:
                 if self.get_tile(u, v) is Tile.ZERO and adjacent(u, v) - self.uncovered:
                     queue.append((u, v))
                     cache.add((u, v))
