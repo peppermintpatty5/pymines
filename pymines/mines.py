@@ -17,8 +17,7 @@ def adjacent(x: int, y: int) -> set[tuple[int, int]]:
 
 class Tile(Enum):
     """
-    A tile uniquely describes a cell. Numeric tiles have corresponding numeric
-    values.
+    A tile uniquely describes a cell. Numeric tiles have corresponding numeric values.
     """
 
     ZERO = 0
@@ -55,10 +54,10 @@ class Minesweeper:
 
     def _generate_mine(self, x: int, y: int) -> None:
         """
-        Randomly generate a mine at the given coordinate if the cell is not adjacent to
-        any uncovered cells.
+        Randomly generate a mine at the given coordinate if the cell is not uncovered and
+        not adjacent to any uncovered cells.
         """
-        if not adjacent(x, y) & self.uncovered:
+        if (x, y) not in self.uncovered and not adjacent(x, y) & self.uncovered:
             if random() < self.density:
                 self.mines.add((x, y))
 
@@ -73,7 +72,7 @@ class Minesweeper:
                 self._generate_mine(x, y)
 
             # generate mines in adjacent cells
-            for u, v in adjacent(x, y) - self.uncovered:
+            for u, v in adjacent(x, y):
                 self._generate_mine(u, v)
 
             # uncover the cell
@@ -100,16 +99,22 @@ class Minesweeper:
 
     def chord(self, x: int, y: int) -> bool:
         """
-        Perform a "chord" move at the given coordinate. Return true if the move is legal,
-        false otherwise.
+        Perform a "chord" move at the given cell. This is a macro-move which will call
+        `uncover()` on all of the adjacent cells. Chording is only allowed if all of the
+        following conditions are met:
+
+        1. The cell is uncovered.
+        2. The cell is not a mine.
+        3. The number of adjacent flags equals the number of adjacent un-detonated mines.
+
+        Returns true if the move is legal, false otherwise.
         """
         adj = adjacent(x, y)
 
         if (
             (x, y) in self.uncovered
             and (x, y) not in self.mines
-            and len(adj & self.flags) + len(adj & self.uncovered & self.mines)
-            == len(adj & self.mines)
+            and len(adj & self.flags) == len(adj & self.mines - self.uncovered)
         ):
             for u, v in adj:
                 self.uncover(u, v)

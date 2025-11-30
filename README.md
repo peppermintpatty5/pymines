@@ -1,12 +1,11 @@
-# pymines
-
-Infinite minesweeper game
+# 💣 pymines
 
 ![In-game screenshot of terminal](imgs/screenshot.png)
 
 ## About
 
-This game implementation uses sets instead of arrays:
+This is an implementation of the game [Minesweeper](<https://en.wikipedia.org/wiki/Minesweeper_(video_game)>) that uses sets instead of arrays.
+As a result of this simple change, the game can progress indefinitely without the need to explicitly resize arrays.
 
 ```py
 # array logic
@@ -18,23 +17,32 @@ if (x, y) in coordinates.mines:
     ...
 ```
 
-The result of this simple change is that the game can progress indefinitely without the need to explicitly resize arrays.
+Three sets $M, R, F \subset \mathbb{Z^2}$ are used to keep track of the mines, uncovered (revealed) cells, and flags respectively.
+Let $A : \mathbb{Z}^2 \to \mathcal{P}(\mathbb{Z}^2)$ be a function which outputs the set of 8 adjacent cells for a given coordinate.
 
-### C++ ~~Rant~~ Comparison
+$$A(x, y) = (\{x - 1, x, x + 1\} \times \{y - 1, y, y + 1\}) \setminus \{(x, y)\}$$
 
-I originally prototyped this game in Python, then wrote it [in C++](https://github.com/peppermintpatty5/cpp-mines), and then rewrote it here in Python.
+### Dynamic generation
 
-This program was much easier to write in Python than in C++. For such a bloated language, C++ lacks many useful features.
+On an infinite playing field the mines need to be generated on-the-fly using a _density_ parameter.
+The density controls the proportion of cells which are mines.
+For a region of width $w$ and height $h$ containing $n$ mines, the density $\delta \in [0, 1]$ is calculated as follows.
 
-1. C++ `std::unordered_set` cannot be used directly with `std::pair`. I had to write a hash function that basically treated `std::pair<long, long>` as a string.
-2. Python integers have unlimited precision whereas C++ has no such data type. Expect to see integer overflow once you move the cursor past `LONG_MIN` or `LONG_MAX`.
-3. It took until C++20 for `std::unordered_set` to get the [`contains`](https://en.cppreference.com/w/cpp/container/unordered_set/contains) method. Previous versions of C++ had to use the iterator syntax.
+$$\delta = \frac{n}{w * h}$$
+
+Each time the player uncovers a cell, mines will be randomly generated in that cell and its adjacent cells with probability $\delta$.
+It is critical that no cell undergo random generation twice.
+The generation criteria for a cell $(x, y)$ is that it not be uncovered $(x, y) \notin R$ and not be adjacent to any uncovered cells $A(x, y) \cap R = \varnothing$.
+
+As a courtesy, the first cell uncovered will never be a mine.
 
 ## Installation
 
-This project requires Python 3.10 or newer and uses only the standard library. You do not need to install anything else, unless you are on Windows:
+This project requires Python 3.10 or newer and uses only the standard library.
+You do not need to install anything else, unless you are on Windows:
 
-> The Windows version of Python doesn't include the [`curses`](https://docs.python.org/3/library/curses.html#module-curses) module. A ported version called [UniCurses](https://pypi.org/project/UniCurses) is available.
+> The Windows version of Python doesn't include the [`curses`](https://docs.python.org/3/library/curses.html#module-curses) module.
+> A ported version called [UniCurses](https://pypi.org/project/UniCurses) is available.
 
 ## Usage
 
@@ -58,4 +66,4 @@ python3 -m pymines -h
 |       `r`       | Refresh window               |
 |       `q`       | Quit                         |
 
-Have fun! :infinity:
+Have fun!
